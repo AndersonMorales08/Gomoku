@@ -139,6 +139,306 @@ class Board{
     }
 }
 
+class MyAgent extends Agent {
+    constructor () {
+        super()
+        this.board = new Board()
+        this.whites = []
+        this.blacks = []
+    }
+
+    compute(board, move_state, time) {
+        var sizeBoard = board.length
+        var moves = this.board.valid_moves(board)
+        console.log(move_state)
+        switch (move_state) {
+            case '1':
+                var initSizeMove = sizeBoard - 2 
+                var initValidMoves = moves.filter((move) => (move[0] <= initSizeMove && move[0] >= 1 && move[1] <= initSizeMove && move[1] >= 1));
+                var match = false
+
+                var blackPos1 = Math.floor(initValidMoves.length * Math.random())
+                var blackPos2 = Math.floor(initValidMoves.length * Math.random())
+                var whitePos = Math.floor(initValidMoves.length * Math.random())
+                
+                for (var i = 0; i < 3; i++) {
+                    if (blackPos1 !== whitePos && blackPos2 !== whitePos && blackPos1 !== blackPos2) {
+                        match = this.verifyGoodMove(initValidMoves[blackPos1], initValidMoves[blackPos2])
+                    }
+                    if (match) {
+                        break;
+                    } else {
+                        blackPos1 = Math.floor(initValidMoves.length * Math.random())
+                        blackPos2 = Math.floor(initValidMoves.length * Math.random())
+                        whitePos = Math.floor(initValidMoves.length * Math.random())
+                    }
+                }
+
+                if (match) {
+                    return [initValidMoves[blackPos1], initValidMoves[blackPos2], initValidMoves[whitePos]]
+                } else {
+                    return[initValidMoves[0], initValidMoves[3], initValidMoves[1]]
+                }
+            break;
+            case '2':
+                var initSizeMove = sizeBoard - 2 
+                var initValidMoves = moves.filter((move) => (move[0] <= initSizeMove && move[0] >= 1 && move[1] <= initSizeMove && move[1] >= 1));
+                var match = false
+                var brd = this.board.clone(board)
+
+                var randNum = Math.random()
+
+                this.dividePieces(brd)
+
+                if(!this.verifyGoodMove(this.blacks[0], this.blacks[1])) {
+                    return 'BLACK'
+                } else if (randNum < 0.03) {
+                    var whitePosBrd = this.whites[0]
+                    var xLeft = whitePosBrd[0] - 1
+                    var xRight = whitePosBrd[0] + 1
+                    var yUp = whitePosBrd[1] - 1
+                    var yDown = whitePosBrd[1] + 1
+
+                    if (xLeft < 0) xLeft = 0
+                    if (xRight > sizeBoard - 1) xRight = sizeBoard - 1
+                    if (yUp < 0) yUp = 0
+                    if (yDown > sizeBoard - 1) yDown = sizeBoard - 1
+
+                    var diffLeft = Math.abs(0 - xLeft) 
+                    var diffRight= Math.abs((sizeBoard - 1) - xRight)
+                    var diffUp = Math.abs(0 - yUp) 
+                    var diffDown = Math.abs((sizeBoard - 1) - yDown)
+                    
+                    var newCoor = [xLeft, xRight, yUp, yDown]
+                    var diffList = [diffLeft, diffRight, diffUp, diffDown]
+
+                    var varIndexMax = this.maxCross(diffList)
+                    var isValid = []
+
+                    for (var i = 0; i < diffList.length; i++) {
+                        if (varIndexMax === 0 || varIndexMax === 1) {
+                            isValid = moves.filter((move) => (move[0] === newCoor[varIndexMax] && move[1] === whitePosBrd[1]))
+                        } else {
+                            isValid = moves.filter((move) => (move[0] === whitePosBrd[0] && move[1] === newCoor[varIndexMax]))
+                        }
+
+                        if (isValid.length > 0) {
+                            break;
+                        }
+                    }
+
+                    return isValid[0]
+                } else {
+                    var blackPos = Math.floor(initValidMoves.length * Math.random())
+                    var whitePos = Math.floor(initValidMoves.length * Math.random())
+
+                    var matchBlack = false
+                    var matchWhite = false
+
+                    for (var i = 0; i < 3; i++) {
+                        if (blackPos !== whitePos) {
+                            for (var j = 0; j < this.blacks.length; j++) {
+                                matchBlack =  this.verifyGoodMove(initValidMoves[blackPos], this.blacks[j])
+
+                                if(!matchBlack) break
+                            }
+
+                            if (matchBlack) {
+                                matchWhite = this.verifyGoodMove(initValidMoves[whitePos], this.whites[0])
+                            }
+                        }
+                        if (matchBlack && matchWhite) {
+                            break;
+                        } else {
+                            blackPos = Math.floor(initValidMoves.length * Math.random())
+                            whitePos = Math.floor(initValidMoves.length * Math.random())
+                        }
+                    }
+
+                    if (matchBlack && matchWhite) {
+                        return [initValidMoves[whitePos], initValidMoves[blackPos]]
+                    } else {
+                        return[initValidMoves[0], initValidMoves[1]]
+                    }
+                }
+            break;
+            case '3':
+                var brd = this.board.clone(board)
+                var maxBlack = -999
+                var maxWhite = -999
+                var analysisBlack = {}
+                var analysiswhite = {}
+                var currentBlack = 0
+                var currentWhite = 0
+
+                this.dividePieces(brd)
+
+                for (var i = 0; i < this.blacks.length; i++) {
+                     analysisBlack = this.localAnalysis(this.blacks[i], brd, "B", sizeBoard)
+                     currentBlack = analysisBlack['density'] + analysisBlack['maxInLine']['value']
+
+                     if(currentBlack > maxBlack) {
+                        maxBlack = currentBlack
+                     }
+                }
+
+                for (var i = 0; i < this.whites.length; i++) {
+                    analysiswhite = this.localAnalysis(this.whites[i], brd, "W", sizeBoard)
+                    currentWhite = analysiswhite['density'] + analysiswhite['maxInLine']['value']
+
+                     if(currentWhite > maxWhite) {
+                        maxWhite = currentWhite
+                     }
+                }
+
+                console.log(maxBlack, maxWhite)
+
+                if (maxBlack > maxWhite) { 
+                    return 'BLACK'
+                } else {
+
+                }
+            break;
+        }
+    }
+
+    dividePieces(brd) {
+        this.whites = []
+        this.blacks = []
+        for (var i = 0; i < brd.length; i++) {
+            for (var j = 0; j < brd.length; j++) {
+                if (brd[i][j] == 'W') {
+                    this.whites.push([j, i])
+                } else if (brd[i][j] == 'B') {
+                    this.blacks.push([j, i])
+                }
+            }
+        }
+    }
+
+    verifyGoodMove(pos1, pos2) {
+        var good = false
+
+        if (pos1[0] == pos2[0]) {
+            if (Math.abs(pos1[1] - pos2[1]) - 1 > 1) {
+                good = true
+            }
+        } else if (pos1[1] == pos2[1]) {
+            if (Math.abs(pos1[0] - pos2[0]) - 1 > 1) {
+                good = true
+            } 
+        } else {
+            if (!((Math.abs(pos1[0] - pos2[0]) - 1 === 1 && Math.abs(pos1[1] - pos2[1]) - 1 === 1) || (Math.abs(pos1[0] - pos2[0]) - 1 === 0 && Math.abs(pos1[1] - pos2[1]) - 1 === 0))) {
+                good = true;
+            } 
+        }
+
+        return good
+    }
+
+    maxCross(listToComp) {
+        var max = 0
+        var maxValue = -999999
+        for (var i = 0; i < listToComp.length; i++) {
+            if (listToComp[i] >= maxValue) {
+                max = i
+                maxValue = listToComp[i]
+            }
+        }
+
+        return max
+    }
+
+    localAnalysis(pos, brd, color, sizeBoard) {
+        var analysis = {}
+        var inLinePieces = {'hor': 0, 'ver': 0, 'ltrbDiag': 0, 'rtlbDiag': 0}
+        var density = 0
+        var localAreaPos = this.localArea(pos, sizeBoard, 2)
+
+        for (var i = localAreaPos[2]; i <= localAreaPos[3]; i++) {
+            for (var j = localAreaPos[0]; j <= localAreaPos[1]; j++) {
+                if (brd[i][j] === color) {
+                    if (j === pos[0] && i === pos[1]) {
+                        inLinePieces['hor'] += 1
+                        inLinePieces['ver'] += 1
+                        inLinePieces['ltrbDiag'] += 1
+                        inLinePieces['rtlbDiag'] += 1
+                    } else if (j === pos[0]) {
+                        inLinePieces['ver'] += 1
+                    } else if (i === pos[1]) {
+                        inLinePieces['hor'] += 1
+                    } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                        if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                            inLinePieces['ltrbDiag'] += 1
+                        } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                            inLinePieces['rtlbDiag'] += 1
+                        }
+                    }
+
+                    density += 1
+                } else if (brd[i][j] !== ' ') {
+                    if (j === pos[0]) {
+                        inLinePieces['ver'] -= 1
+                    } else if (i === pos[1]) {
+                        inLinePieces['hor'] -= 1
+                    } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                        if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                            inLinePieces['ltrbDiag'] -= 1
+                        } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                            inLinePieces['rtlbDiag'] -= 1
+                        }
+                    }
+                }
+            }
+        }
+
+        analysis['density'] = density
+        analysis['inLinePieces'] = inLinePieces
+
+        var maxLine = this.maxInLine(analysis['inLinePieces'])
+        var key = maxLine['keys'][maxLine['max']]
+        var value = maxLine['values'][maxLine['max']]
+
+        analysis['maxInLine'] = {'key': key, 'value': value} 
+
+        return analysis
+    }
+
+    maxInLine(inLinePieces) {
+        var keys = Object.keys(inLinePieces)
+        var values = Object.values(inLinePieces)
+
+        var max = 0
+        var maxValue = -999999
+        for (var i = 0; i < keys.length; i++) {
+            if (values[i] > maxValue) {
+                max = i
+                maxValue = values[i]
+            }
+        }
+
+        return {'max': max, 'keys': keys, 'values': values}
+    }
+
+    localArea(pos, sizeBoard, areaExpanded) {
+        var xLeft = pos[0] - areaExpanded
+        var xRight = pos[0] + areaExpanded
+        var yUp = pos[1] - areaExpanded
+        var yDown = pos[1] + areaExpanded
+
+        if (xLeft < 0) xLeft = 0
+        if (xRight > sizeBoard - 1) xRight = sizeBoard - 1
+        if (yUp < 0) yUp = 0
+        if (yDown > sizeBoard - 1) yDown = sizeBoard - 1
+
+        return [xLeft, xRight, yUp, yDown]
+    }
+
+    playNow(pos, brd, color, sizeBoard) {
+
+    }
+}
+
 /*
  * Player's Code (Must inherit from Agent) 
  * This is an example of a rangom player agent
@@ -150,8 +450,8 @@ class RandomPlayer extends Agent{
     }
 
     compute(board, move_state, time){
-        for(var i=0; i<50000000; i++){} // Making it very slow to test time restriction
-        for(var i=0; i<50000000; i++){} // Making it very slow to test time restriction
+        for(var i=0; i<200000000; i++){} // Making it very slow to test time restriction
+        for(var i=0; i<200000000; i++){} // Making it very slow to test time restriction
         var moves = this.board.valid_moves(board)
         var index1, index2, index3
         var r
@@ -170,11 +470,11 @@ class RandomPlayer extends Agent{
             break;
             case '2':
                 r = Math.random()
-                if(r<0.33333) return 'BLACK'
-                if(r<0.66666){
-                    index1 = Math.floor(moves.length * Math.random())
-                    return moves[index1]
-                }
+                // if(r<0.9999933333) return 'BLACK'
+                // if(r<0.66666){
+                //     index1 = Math.floor(moves.length * Math.random())
+                //     return moves[index1]
+                // }
                 index1 = Math.floor(moves.length * Math.random())
                 index2 = index1 
                 while(index1==index2){
@@ -184,7 +484,7 @@ class RandomPlayer extends Agent{
             break;
             case '3':
                 r = Math.random()
-                if(r<0.5) return 'BLACK'
+                if(r<0.0000005) return 'BLACK'
                 index1 = Math.floor(moves.length * Math.random())
                 return moves[index1]
             break;
@@ -325,13 +625,16 @@ class Environment extends MainClient{
                 break;    
                 case '2':
                     action = get(x.white, b, '2')
-                    if(action == 'BLACK') swap('W')
-                    else{
+                    if(action == 'BLACK'){
+                        swap('W')
+                        x.state = 'W'
+                    }else{
                         if(action != null){
                             if(typeof action[0] == 'number'){
                                 if(!board.move(x.rb, action, 'W')){
                                     x.winner = x.black + ' ...Invalid move taken by ' + x.white + ' on position ' + action[i][0] + ',' +action[i][1] 
                                 }
+                                x.state = 'B'
                             }else{
                                 for( var i=0; i<2; i++ ){
                                     if(!board.move(x.rb, action[i], i<1?'W':'B')){
