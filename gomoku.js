@@ -443,84 +443,96 @@ class MyAgent extends Agent {
     }
 
     bestMove(board, color) {
-        let opponentColor = color === 'W' ? 'B' : 'W';
-        let size = board.length;
-        let fallbackMove = null;
+    	let opponentColor = color === 'W' ? 'B' : 'W';
+    	let size = board.length;
+    	let center = Math.floor(size / 2);
+    	let fallbackMove = null;
+    	let bestScore = -Infinity; // Guardará la mejor puntuación encontrada
 
-        let threeCount = 0; // Contador de líneas de 3 existentes
+    	let threeCount = 0; // Contador de líneas de 3 existentes
 
-        for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {
-                    if (board[i][j] === ' ') {
-                            let tempBoard = this.board.clone(board);
+    	for (let i = 0; i < size; i++) {
+        	for (let j = 0; j < size; j++) {
+            		if (board[i][j] === ' ') {
+                		let tempBoard = this.board.clone(board);
 
-                            // 1. Bloquear si el oponente puede ganar
-                this.board.move(tempBoard, [j, i], opponentColor);
-                           if (this.board.winner(tempBoard) === opponentColor) {
-                                return [j, i];
-                            }
+                		// 1. Bloquear si el oponente puede ganar
+                		this.board.move(tempBoard, [j, i], opponentColor);
+                		if (this.board.winner(tempBoard) === opponentColor) {
+                    			return [j, i];
+                		}
 
-                            // 2. Ganar si hay oportunidad
-                            tempBoard = this.board.clone(board);
-                            this.board.move(tempBoard, [j, i], color);
-                            if (this.board.winner(tempBoard) === color) {
-                                return [j, i];
-                            }
+                		// 2. Ganar si hay oportunidad
+                		tempBoard = this.board.clone(board);
+                		this.board.move(tempBoard, [j, i], color);
+                		if (this.board.winner(tempBoard) === color) {
+                    			return [j, i];
+                		}
 
-                            // 3. Contar cuántas líneas de 3 existen en el tablero
-                            if (this.createsLine(board, [j, i], color, 3)) {
-                                threeCount++;
-                                if (!fallbackMove) {
-                                        fallbackMove = [j, i]; // Guardamos este movimiento como opción si no encontramos algo mejor
-                                }
-                            }
+                		// 3. Contar cuántas líneas de 3 existen en el tablero
+                		if (this.createsLine(board, [j, i], color, 3)) {
+                    			threeCount++;
+                		}
 
-                            // 4. Si hay suficientes líneas de 3, empezar a buscar líneas de 4
-                            if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
-                                return [j, i]; // Prioriza formar líneas de 4 si ya hay varias de 3
-                            }
-                    }
-                }
-        }
+                		// 4. Si hay suficientes líneas de 3, priorizar crear líneas de 4
+                		if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
+                    			return [j, i];
+                		}
 
-        // Si no encontramos un movimiento crítico, jugamos el mejor intento de formar una línea de 3
-        return fallbackMove || this.board.valid_moves(board)[0]; 
+                		// 5. Evaluar si este es el mejor movimiento de respaldo (más cerca del centro)
+                		let score = this.distanceFromCenter(j, i, center);
+                		if (score > bestScore) {
+                    			bestScore = score;
+                    			fallbackMove = [j, i];
+                		}
+            		}
+        	}
+    	}
+
+    	// Si no hay un movimiento claro, jugar el más cercano al centro
+    	return fallbackMove || this.board.valid_moves(board)[0];
     }
 
+    distanceFromCenter(x, y, center) {
+    	return -((x - center) ** 2 + (y - center) ** 2); // Mientras más negativo, más lejos del centro
+    }
 
-    createsLine(board, [x, y], color, length) {
-        let tempBoard = this.board.clone(board);
-        this.board.move(tempBoard, [x, y], color);
+    createsLine(board, [x, y], color, n) {
+    	const directions = [
+        	[1, 0],  // → Horizontal
+        	[0, 1],  // ↓ Vertical
+        	[1, 1],  // ↘ Diagonal principal
+        	[-1, 1]  // ↙ Diagonal secundaria
+    	];
 
-        let size = board.length;
-        let directions = [
-                [1, 0],  // Horizontal →
-                [0, 1],  // Vertical ↓
-                [1, 1],  // Diagonal ↘
-                [1, -1]  // Diagonal ↙
-        ];
+    	for (const [dx, dy] of directions) {
+        	let count = 1;  // Cuenta la pieza que colocaremos en (x, y)
 
-        for (let [dx, dy] of directions) {
-                let count = 1;
-                for (let step = 1; step < length; step++) {
-                    let nx = x + dx * step, ny = y + dy * step;
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && tempBoard[ny][nx] === color) {
-                            count++;
-                    } else {
-                            break;
-                    }
-                }
-                for (let step = 1; step < length; step++) {
-                    let nx = x - dx * step, ny = y - dy * step;
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && tempBoard[ny][nx] === color) {
-                            count++;
-                    } else {
-                            break;
-                    }
-                }
-                if (count >= length) return true;
-        }
-        return false;
+        	// Recorre en una dirección (positiva)
+        	let i = 1;
+        	while (this.isValid(board, x + i * dx, y + i * dy) && board[y + i * dy][x + i * dx] === color) {
+            		count++;
+            		i++;
+        	}
+
+        	// Recorre en la dirección opuesta (negativa)
+        	i = 1;
+        	while (this.isValid(board, x - i * dx, y - i * dy) && board[y - i * dy][x - i * dx] === color) {
+            		count++;
+            		i++;
+        	}
+
+        	// Si encontramos la cantidad de piezas necesarias, retorna true
+        	if (count >= n) {
+            		return true;
+        	}
+    	}
+
+    	return false;
+    }
+
+    isValid(board, x, y) {
+    	return x >= 0 && y >= 0 && x < board.length && y < board.length;
     }
 
     playNow(brd, color, sizeBoard) {

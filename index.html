@@ -26,7 +26,8 @@ function KonektiMain(){
 	var client = new Environment()
     client.setPlayers({
         'agent': new MyAgent(),
-        'agent2': new MyAgent()
+        'agent2': new MyAgent(),
+	'random': new RandomPlayer()
     })
 
 	Konekti.header('title','', 'Gomoku', 3, {'class':'w3-black w3-center'} )

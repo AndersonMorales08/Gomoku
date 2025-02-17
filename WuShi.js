@@ -1,21 +1,20 @@
-class MyAgent extends Agent {
+class WuShi extends Agent {
     constructor () {
         super()
         this.board = new Board()
         this.color = null
-		// Blancas en el tablero
         this.whites = []
-		// Negras en el tablero
         this.blacks = []
     }
 
     compute(board, move_state, time) {
         var sizeBoard = board.length
         var moves = this.board.valid_moves(board)
+        console.log(move_state)
         switch (move_state) {
             case '1':
                 var initSizeMove = sizeBoard - 2 
-                var initValidMoves = moves.filter((move) => (move[0] <= initSizeMove && move[0] >= 1 && move[1] <= initSizeMove && move[1] >= 1)); // Quita la fila de arriba y la fila de abajo, y la columna de la derecha y la de la izquierda, para que las jugadas se hagan en un tablero de sizeBoard - 2
+                var initValidMoves = moves.filter((move) => (move[0] <= initSizeMove && move[0] >= 1 && move[1] <= initSizeMove && move[1] >= 1));
                 var match = false
 
                 var blackPos1 = Math.floor(initValidMoves.length * Math.random())
@@ -24,7 +23,7 @@ class MyAgent extends Agent {
                 
                 for (var i = 0; i < 3; i++) {
                     if (blackPos1 !== whitePos && blackPos2 !== whitePos && blackPos1 !== blackPos2) {
-                        match = this.verifyGoodMove(initValidMoves[blackPos1], initValidMoves[blackPos2])   // Verifica que las fichas no esten muy juntas
+                        match = this.verifyGoodMove(initValidMoves[blackPos1], initValidMoves[blackPos2])
                     }
                     if (match) {
                         break;
@@ -51,7 +50,8 @@ class MyAgent extends Agent {
 
                 this.dividePieces(brd)
 
-                if(!this.verifyGoodMove(this.blacks[0], this.blacks[1])) {   // Si las fichas negras están juntas o con una separación de un cuadro, escoge las negras 
+                if(!this.verifyGoodMove(this.blacks[0], this.blacks[1])) {
+                    console.log("Entro")
                     return 'BLACK'
                 } else if (randNum < 0.03) {
                     var whitePosBrd = this.whites[0]
@@ -65,18 +65,18 @@ class MyAgent extends Agent {
                     if (yUp < 0) yUp = 0
                     if (yDown > sizeBoard - 1) yDown = sizeBoard - 1
 
-                    var diffLeft = Math.abs(0 - xLeft)   // Revisa que tan separado esta de la parte izquierda del tablero 
-                    var diffRight= Math.abs((sizeBoard - 1) - xRight)   // Revisa que tan separado esta de la parte derecha del tablero 
-                    var diffUp = Math.abs(0 - yUp)  // Revisa que tan separado esta de la parte de arriba del tablero 
-                    var diffDown = Math.abs((sizeBoard - 1) - yDown)   // Revisa que tan separado esta de la parte de abajo del tablero 
+                    var diffLeft = Math.abs(0 - xLeft) 
+                    var diffRight= Math.abs((sizeBoard - 1) - xRight)
+                    var diffUp = Math.abs(0 - yUp) 
+                    var diffDown = Math.abs((sizeBoard - 1) - yDown)
                     
                     var newCoor = [xLeft, xRight, yUp, yDown]
                     var diffList = [diffLeft, diffRight, diffUp, diffDown]
 
-                    var varIndexMax = this.maxCross(diffList)   // Devuelve el indice del elemento más grando, es decir, del lado más separado de los límites del tablero
+                    var varIndexMax = this.maxCross(diffList)
                     var isValid = []
 
-                    for (var i = 0; i < diffList.length; i++) {   // Revisa que la jugada sea válida
+                    for (var i = 0; i < diffList.length; i++) {
                         if (varIndexMax === 0 || varIndexMax === 1) {
                             isValid = moves.filter((move) => (move[0] === newCoor[varIndexMax] && move[1] === whitePosBrd[1]))
                         } else {
@@ -90,6 +90,7 @@ class MyAgent extends Agent {
 
                     return isValid[0]
                 } else {
+                    console.log("Entro dos piezas")
                     var blackPos = Math.floor(initValidMoves.length * Math.random())
                     var whitePos = Math.floor(initValidMoves.length * Math.random())
 
@@ -98,7 +99,7 @@ class MyAgent extends Agent {
 
                     for (var i = 0; i < 3; i++) {
                         if (blackPos !== whitePos) {
-                            for (var j = 0; j < this.blacks.length; j++) {   // Revisa que la nueva ficha negra que vaya a poner este alejada de las otras dos.
+                            for (var j = 0; j < this.blacks.length; j++) {
                                 matchBlack =  this.verifyGoodMove(initValidMoves[blackPos], this.blacks[j])
 
                                 if(!matchBlack) break
@@ -136,7 +137,7 @@ class MyAgent extends Agent {
 
                 for (var i = 0; i < this.blacks.length; i++) {
                      analysisBlack = this.localAnalysis(this.blacks[i], brd, "B", sizeBoard)
-                     currentBlack = analysisBlack['density'] + analysisBlack['maxInLine']['value']   // Esta suma sirve para saber si escoger negras o blancas
+                     currentBlack = analysisBlack['density'] + analysisBlack['maxInLine']['value']
 
                      if(currentBlack > maxBlack) {
                         maxBlack = currentBlack
@@ -145,26 +146,29 @@ class MyAgent extends Agent {
 
                 for (var i = 0; i < this.whites.length; i++) {
                     analysiswhite = this.localAnalysis(this.whites[i], brd, "W", sizeBoard)
-                    currentWhite = analysiswhite['density'] + analysiswhite['maxInLine']['value']   // Esta suma sirve para saber si escoger negras o blancas
+                    currentWhite = analysiswhite['density'] + analysiswhite['maxInLine']['value']
 
                      if(currentWhite > maxWhite) {
                         maxWhite = currentWhite
                      }
                 }
 
-                if (maxBlack > maxWhite) {   // Escoge negras o blancas 
+                console.log(maxBlack, maxWhite)
+
+                if (maxBlack > maxWhite) { 
                     return 'BLACK'
                 } else {
+                    console.log(this.color)
                     return this.bestMove(board, this.color)
                 }
             break;
             default:
+                console.log(this.color)
                 return this.bestMove(board, this.color)
 			break;
         }
     }
 
-	// Divide las fichas dentro del tablero en las listas de su respectivo color.
     dividePieces(brd) {
         this.whites = []
         this.blacks = []
@@ -179,7 +183,6 @@ class MyAgent extends Agent {
         }
     }
 
-	// Verifica que las fichas no esten muy juntas
     verifyGoodMove(pos1, pos2) {
         var good = false
 
@@ -213,7 +216,6 @@ class MyAgent extends Agent {
         return max
     }
 
-	// Analiza la posición de una ficha, en un cuadrado 5x5 con la ficha en el medio. Verifica cuántas fichas del color hay en esa area y si tiene fichas en línea.
     localAnalysis(pos, brd, color, sizeBoard) {
         var analysis = {}
         var inLinePieces = {'hor': 0, 'ver': 0, 'ltrbDiag': 0, 'rtlbDiag': 0}
@@ -228,20 +230,20 @@ class MyAgent extends Agent {
                         inLinePieces['ver'] += 1
                         inLinePieces['ltrbDiag'] += 1
                         inLinePieces['rtlbDiag'] += 1
-                    } else if (j === pos[0]) {   // Verifica que hallan fichas del mismo color en la verical
-                        inLinePieces['ver'] += 1   
-                    } else if (i === pos[1]) {   // Verifica que hallan fichas del mismo color en la horizontal
+                    } else if (j === pos[0]) {
+                        inLinePieces['ver'] += 1
+                    } else if (i === pos[1]) {
                         inLinePieces['hor'] += 1
                     } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
-                        if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {   // Verifica que hallan fichas del mismo color en la diagonal izquierda arriba a derech abajo
+                        if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
                             inLinePieces['ltrbDiag'] += 1
-                        } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {   // Verifica que hallan fichas del mismo color en la diagonal derecha arriba a izquierda abajo
+                        } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
                             inLinePieces['rtlbDiag'] += 1
                         }
                     }
 
                     density += 1
-                } else if (brd[i][j] !== ' ') {   // Hace lo mismo que en el anterior if, pero con las fichas del otro color. Si esta en línea con una ficha de otro color, resta 2.
+                } else if (brd[i][j] !== ' ') {
                     if (j === pos[0]) {
                         inLinePieces['ver'] -= 1
                     } else if (i === pos[1]) {
@@ -285,7 +287,6 @@ class MyAgent extends Agent {
         return {'max': max, 'keys': keys, 'values': values}
     }
 
-	// Expande el area de la ficha para analizarlo
     localArea(pos, sizeBoard, areaExpanded) {
         var xLeft = pos[0] - areaExpanded
         var xRight = pos[0] + areaExpanded
@@ -301,83 +302,153 @@ class MyAgent extends Agent {
     }
 
     bestMove(board, color) {
-        let opponentColor = color === 'W' ? 'B' : 'W';
-        let size = board.length;
-        let fallbackMove = null;
+    	let opponentColor = color === 'W' ? 'B' : 'W';
+    	let size = board.length;
+    	let center = Math.floor(size / 2);
+    	let fallbackMove = null;
+    	let bestScore = -Infinity; // Guardará la mejor puntuación encontrada
 
-        let threeCount = 0; // Contador de líneas de 3 existentes
+    	let threeCount = 0; // Contador de líneas de 3 existentes
 
-        for (let i = 0; i < size; i++) {
-                for (let j = 0; j < size; j++) {
-                    if (board[i][j] === ' ') {
-                            let tempBoard = this.board.clone(board);
+    	for (let i = 0; i < size; i++) {
+        	for (let j = 0; j < size; j++) {
+            		if (board[i][j] === ' ') {
+                		let tempBoard = this.board.clone(board);
 
-                            // 1. Bloquear si el oponente puede ganar
-                this.board.move(tempBoard, [j, i], opponentColor);
-                           if (this.board.winner(tempBoard) === opponentColor) {
-                                return [j, i];
-                            }
+                		// 1. Bloquear si el oponente puede ganar
+                		this.board.move(tempBoard, [j, i], opponentColor);
+                		if (this.board.winner(tempBoard) === opponentColor) {
+                    			return [j, i];
+                		}
 
-                            // 2. Ganar si hay oportunidad
-                            tempBoard = this.board.clone(board);
-                            this.board.move(tempBoard, [j, i], color);
-                            if (this.board.winner(tempBoard) === color) {
-                                return [j, i];
-                            }
+                		// 2. Ganar si hay oportunidad
+                		tempBoard = this.board.clone(board);
+                		this.board.move(tempBoard, [j, i], color);
+                		if (this.board.winner(tempBoard) === color) {
+                    			return [j, i];
+                		}
 
-                            // 3. Contar cuántas líneas de 3 existen en el tablero
-                            if (this.createsLine(board, [j, i], color, 3)) {
-                                threeCount++;
-                                if (!fallbackMove) {
-                                        fallbackMove = [j, i]; // Guardamos este movimiento como opción si no encontramos algo mejor
-                                }
-                            }
+                		// 3. Contar cuántas líneas de 3 existen en el tablero
+                		if (this.createsLine(board, [j, i], color, 3)) {
+                    			threeCount++;
+                		}
 
-                            // 4. Si hay suficientes líneas de 3, empezar a buscar líneas de 4
-                            if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
-                                return [j, i]; // Prioriza formar líneas de 4 si ya hay varias de 3
-                            }
-                    }
-                }
-        }
+                		// 4. Si hay suficientes líneas de 3, priorizar crear líneas de 4
+                		if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
+                    			return [j, i];
+                		}
 
-        // Si no encontramos un movimiento crítico, jugamos el mejor intento de formar una línea de 3
-        return fallbackMove || this.board.valid_moves(board)[0]; 
+                		// 5. Evaluar si este es el mejor movimiento de respaldo (más cerca del centro)
+                		let score = this.distanceFromCenter(j, i, center);
+                		if (score > bestScore) {
+                    			bestScore = score;
+                    			fallbackMove = [j, i];
+                		}
+            		}
+        	}
+    	}
+
+    	// Si no hay un movimiento claro, jugar el más cercano al centro
+    	return fallbackMove || this.board.valid_moves(board)[0];
     }
 
+    distanceFromCenter(x, y, center) {
+    	return -((x - center) ** 2 + (y - center) ** 2); // Mientras más negativo, más lejos del centro
+    }
 
-    createsLine(board, [x, y], color, length) {
-        let tempBoard = this.board.clone(board);
-        this.board.move(tempBoard, [x, y], color);
+    createsLine(board, [x, y], color, n) {
+    	const directions = [
+        	[1, 0],  // → Horizontal
+        	[0, 1],  // ↓ Vertical
+        	[1, 1],  // ↘ Diagonal principal
+        	[-1, 1]  // ↙ Diagonal secundaria
+    	];
 
-        let size = board.length;
-        let directions = [
-                [1, 0],  // Horizontal →
-                [0, 1],  // Vertical ↓
-                [1, 1],  // Diagonal ↘
-                [1, -1]  // Diagonal ↙
-        ];
+    	for (const [dx, dy] of directions) {
+        	let count = 1;  // Cuenta la pieza que colocaremos en (x, y)
 
-        for (let [dx, dy] of directions) {
-                let count = 1;
-                for (let step = 1; step < length; step++) {
-                    let nx = x + dx * step, ny = y + dy * step;
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && tempBoard[ny][nx] === color) {
-                            count++;
-                    } else {
-                            break;
+        	// Recorre en una dirección (positiva)
+        	let i = 1;
+        	while (this.isValid(board, x + i * dx, y + i * dy) && board[y + i * dy][x + i * dx] === color) {
+            		count++;
+            		i++;
+        	}
+
+        	// Recorre en la dirección opuesta (negativa)
+        	i = 1;
+        	while (this.isValid(board, x - i * dx, y - i * dy) && board[y - i * dy][x - i * dx] === color) {
+            		count++;
+            		i++;
+        	}
+
+        	// Si encontramos la cantidad de piezas necesarias, retorna true
+        	if (count >= n) {
+            		return true;
+        	}
+    	}
+
+    	return false;
+    }
+
+    isValid(board, x, y) {
+    	return x >= 0 && y >= 0 && x < board.length && y < board.length;
+    }
+
+    playNow(brd, color, sizeBoard) {
+        if (color === "W") {
+            var localAreaPos = []
+            var pos = []
+            var blacksPos = []
+            var whitesPos = []
+
+            for (var k = 0; k < this.blacks.length; k++) {
+                var inLinePieces = {'hor': 0, 'ver': 0, 'ltrbDiag': 0, 'rtlbDiag': 0}
+
+                pos = this.blacks[k]
+                localAreaPos = this.localArea(pos, sizeBoard, 3)
+                blacksPos.push([])
+
+                for (var i = localAreaPos[2]; i <= localAreaPos[3]; i++) {
+                    for (var j = localAreaPos[0]; j <= localAreaPos[1]; j++) {
+                        if (brd[i][j] === color) {
+                            if (j === pos[0] && i === pos[1]) {
+                                inLinePieces['hor'] += 1
+                                inLinePieces['ver'] += 1
+                                inLinePieces['ltrbDiag'] += 1
+                                inLinePieces['rtlbDiag'] += 1
+                            } else if (j === pos[0]) {
+                                inLinePieces['ver'] += 1
+
+                                if (k === 0) {
+
+                                }
+                            } else if (i === pos[1]) {
+                                inLinePieces['hor'] += 1
+                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                                    inLinePieces['ltrbDiag'] += 1
+                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                                    inLinePieces['rtlbDiag'] += 1
+                                }
+                            }
+        
+                            density += 1
+                        } else if (brd[i][j] !== ' ') {
+                            if (j === pos[0]) {
+                                inLinePieces['ver'] -= 1
+                            } else if (i === pos[1]) {
+                                inLinePieces['hor'] -= 1
+                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                                    inLinePieces['ltrbDiag'] -= 1
+                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                                    inLinePieces['rtlbDiag'] -= 1
+                                }
+                            }
+                        }
                     }
                 }
-                for (let step = 1; step < length; step++) {
-                    let nx = x - dx * step, ny = y - dy * step;
-                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && tempBoard[ny][nx] === color) {
-                            count++;
-                    } else {
-                            break;
-                    }
-                }
-                if (count >= length) return true;
+            }
         }
-        return false;
     }
 }
