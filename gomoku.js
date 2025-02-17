@@ -143,6 +143,7 @@ class MyAgent extends Agent {
     constructor () {
         super()
         this.board = new Board()
+        this.color = null
         this.whites = []
         this.blacks = []
     }
@@ -191,6 +192,7 @@ class MyAgent extends Agent {
                 this.dividePieces(brd)
 
                 if(!this.verifyGoodMove(this.blacks[0], this.blacks[1])) {
+                    console.log("Entro")
                     return 'BLACK'
                 } else if (randNum < 0.03) {
                     var whitePosBrd = this.whites[0]
@@ -229,6 +231,7 @@ class MyAgent extends Agent {
 
                     return isValid[0]
                 } else {
+                    console.log("Entro dos piezas")
                     var blackPos = Math.floor(initValidMoves.length * Math.random())
                     var whitePos = Math.floor(initValidMoves.length * Math.random())
 
@@ -296,9 +299,14 @@ class MyAgent extends Agent {
                 if (maxBlack > maxWhite) { 
                     return 'BLACK'
                 } else {
-
+                    console.log(this.color)
+                    return this.bestMove(board, this.color)
                 }
             break;
+            default:
+                console.log(this.color)
+                return this.bestMove(board, this.color)
+			break;
         }
     }
 
@@ -434,8 +442,143 @@ class MyAgent extends Agent {
         return [xLeft, xRight, yUp, yDown]
     }
 
-    playNow(pos, brd, color, sizeBoard) {
+    bestMove(board, color) {
+        let opponentColor = color === 'W' ? 'B' : 'W';
+        let size = board.length;
+        let fallbackMove = null;
 
+        let threeCount = 0; // Contador de líneas de 3 existentes
+
+        for (let i = 0; i < size; i++) {
+                for (let j = 0; j < size; j++) {
+                    if (board[i][j] === ' ') {
+                            let tempBoard = this.board.clone(board);
+
+                            // 1. Bloquear si el oponente puede ganar
+                this.board.move(tempBoard, [j, i], opponentColor);
+                           if (this.board.winner(tempBoard) === opponentColor) {
+                                return [j, i];
+                            }
+
+                            // 2. Ganar si hay oportunidad
+                            tempBoard = this.board.clone(board);
+                            this.board.move(tempBoard, [j, i], color);
+                            if (this.board.winner(tempBoard) === color) {
+                                return [j, i];
+                            }
+
+                            // 3. Contar cuántas líneas de 3 existen en el tablero
+                            if (this.createsLine(board, [j, i], color, 3)) {
+                                threeCount++;
+                                if (!fallbackMove) {
+                                        fallbackMove = [j, i]; // Guardamos este movimiento como opción si no encontramos algo mejor
+                                }
+                            }
+
+                            // 4. Si hay suficientes líneas de 3, empezar a buscar líneas de 4
+                            if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
+                                return [j, i]; // Prioriza formar líneas de 4 si ya hay varias de 3
+                            }
+                    }
+                }
+        }
+
+        // Si no encontramos un movimiento crítico, jugamos el mejor intento de formar una línea de 3
+        return fallbackMove || this.board.valid_moves(board)[0]; 
+    }
+
+
+    createsLine(board, [x, y], color, length) {
+        let tempBoard = this.board.clone(board);
+        this.board.move(tempBoard, [x, y], color);
+
+        let size = board.length;
+        let directions = [
+                [1, 0],  // Horizontal →
+                [0, 1],  // Vertical ↓
+                [1, 1],  // Diagonal ↘
+                [1, -1]  // Diagonal ↙
+        ];
+
+        for (let [dx, dy] of directions) {
+                let count = 1;
+                for (let step = 1; step < length; step++) {
+                    let nx = x + dx * step, ny = y + dy * step;
+                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && tempBoard[ny][nx] === color) {
+                            count++;
+                    } else {
+                            break;
+                    }
+                }
+                for (let step = 1; step < length; step++) {
+                    let nx = x - dx * step, ny = y - dy * step;
+                    if (nx >= 0 && nx < size && ny >= 0 && ny < size && tempBoard[ny][nx] === color) {
+                            count++;
+                    } else {
+                            break;
+                    }
+                }
+                if (count >= length) return true;
+        }
+        return false;
+    }
+
+    playNow(brd, color, sizeBoard) {
+        if (color === "W") {
+            var localAreaPos = []
+            var pos = []
+            var blacksPos = []
+            var whitesPos = []
+
+            for (var k = 0; k < this.blacks.length; k++) {
+                var inLinePieces = {'hor': 0, 'ver': 0, 'ltrbDiag': 0, 'rtlbDiag': 0}
+
+                pos = this.blacks[k]
+                localAreaPos = this.localArea(pos, sizeBoard, 3)
+                blacksPos.push([])
+
+                for (var i = localAreaPos[2]; i <= localAreaPos[3]; i++) {
+                    for (var j = localAreaPos[0]; j <= localAreaPos[1]; j++) {
+                        if (brd[i][j] === color) {
+                            if (j === pos[0] && i === pos[1]) {
+                                inLinePieces['hor'] += 1
+                                inLinePieces['ver'] += 1
+                                inLinePieces['ltrbDiag'] += 1
+                                inLinePieces['rtlbDiag'] += 1
+                            } else if (j === pos[0]) {
+                                inLinePieces['ver'] += 1
+
+                                if (k === 0) {
+
+                                }
+                            } else if (i === pos[1]) {
+                                inLinePieces['hor'] += 1
+                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                                    inLinePieces['ltrbDiag'] += 1
+                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                                    inLinePieces['rtlbDiag'] += 1
+                                }
+                            }
+        
+                            density += 1
+                        } else if (brd[i][j] !== ' ') {
+                            if (j === pos[0]) {
+                                inLinePieces['ver'] -= 1
+                            } else if (i === pos[1]) {
+                                inLinePieces['hor'] -= 1
+                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                                    inLinePieces['ltrbDiag'] -= 1
+                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                                    inLinePieces['rtlbDiag'] -= 1
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -470,19 +613,11 @@ class RandomPlayer extends Agent{
             break;
             case '2':
                 r = Math.random()
-<<<<<<< HEAD
                 // if(r<0.9999933333) return 'BLACK'
                 // if(r<0.66666){
                 //     index1 = Math.floor(moves.length * Math.random())
                 //     return moves[index1]
                 // }
-=======
-                if(r<0.9999933333) return 'BLACK'
-                if(r<0.66666){
-                    index1 = Math.floor(moves.length * Math.random())
-                    return moves[index1]
-                }
->>>>>>> main
                 index1 = Math.floor(moves.length * Math.random())
                 index2 = index1 
                 while(index1==index2){
