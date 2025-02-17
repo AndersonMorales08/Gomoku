@@ -470,11 +470,19 @@ class RandomPlayer extends Agent{
             break;
             case '2':
                 r = Math.random()
+<<<<<<< HEAD
                 // if(r<0.9999933333) return 'BLACK'
                 // if(r<0.66666){
                 //     index1 = Math.floor(moves.length * Math.random())
                 //     return moves[index1]
                 // }
+=======
+                if(r<0.9999933333) return 'BLACK'
+                if(r<0.66666){
+                    index1 = Math.floor(moves.length * Math.random())
+                    return moves[index1]
+                }
+>>>>>>> main
                 index1 = Math.floor(moves.length * Math.random())
                 index2 = index1 
                 while(index1==index2){
