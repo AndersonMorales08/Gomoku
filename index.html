@@ -25,8 +25,9 @@ Konekti.uses('header','navbar', 'canvas')
 function KonektiMain(){
 	var client = new Environment()
     client.setPlayers({
-        'agent': new MyAgent(),
-        'agent2': new MyAgent(),
+        'agent': new WuShi(),
+        'agent2': new WuShi(),
+        // 'rand2': new RandomPlayer(),
 	'random': new RandomPlayer()
     })
 

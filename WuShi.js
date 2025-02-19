@@ -51,7 +51,7 @@ class WuShi extends Agent {
                 this.dividePieces(brd)
 
                 if(!this.verifyGoodMove(this.blacks[0], this.blacks[1])) {
-                    console.log("Entro")
+                    this.color = 'B'
                     return 'BLACK'
                 } else if (randNum < 0.03) {
                     var whitePosBrd = this.whites[0]
@@ -87,10 +87,9 @@ class WuShi extends Agent {
                             break;
                         }
                     }
-
+                    this.color = 'W'
                     return isValid[0]
                 } else {
-                    console.log("Entro dos piezas")
                     var blackPos = Math.floor(initValidMoves.length * Math.random())
                     var whitePos = Math.floor(initValidMoves.length * Math.random())
 
@@ -153,17 +152,16 @@ class WuShi extends Agent {
                      }
                 }
 
-                console.log(maxBlack, maxWhite)
-
                 if (maxBlack > maxWhite) { 
+                    this.color = 'B'
                     return 'BLACK'
                 } else {
-                    console.log(this.color)
+                    this.color = 'W'
                     return this.bestMove(board, this.color)
                 }
             break;
             default:
-                console.log(this.color)
+                this.color = move_state
                 return this.bestMove(board, this.color)
 			break;
         }
@@ -303,6 +301,8 @@ class WuShi extends Agent {
 
     bestMove(board, color) {
     	let opponentColor = color === 'W' ? 'B' : 'W';
+        console.log('Color: ', color)
+        console.log('OponentColor: ', opponentColor)
     	let size = board.length;
     	let center = Math.floor(size / 2);
     	let fallbackMove = null;
@@ -392,63 +392,5 @@ class WuShi extends Agent {
 
     isValid(board, x, y) {
     	return x >= 0 && y >= 0 && x < board.length && y < board.length;
-    }
-
-    playNow(brd, color, sizeBoard) {
-        if (color === "W") {
-            var localAreaPos = []
-            var pos = []
-            var blacksPos = []
-            var whitesPos = []
-
-            for (var k = 0; k < this.blacks.length; k++) {
-                var inLinePieces = {'hor': 0, 'ver': 0, 'ltrbDiag': 0, 'rtlbDiag': 0}
-
-                pos = this.blacks[k]
-                localAreaPos = this.localArea(pos, sizeBoard, 3)
-                blacksPos.push([])
-
-                for (var i = localAreaPos[2]; i <= localAreaPos[3]; i++) {
-                    for (var j = localAreaPos[0]; j <= localAreaPos[1]; j++) {
-                        if (brd[i][j] === color) {
-                            if (j === pos[0] && i === pos[1]) {
-                                inLinePieces['hor'] += 1
-                                inLinePieces['ver'] += 1
-                                inLinePieces['ltrbDiag'] += 1
-                                inLinePieces['rtlbDiag'] += 1
-                            } else if (j === pos[0]) {
-                                inLinePieces['ver'] += 1
-
-                                if (k === 0) {
-
-                                }
-                            } else if (i === pos[1]) {
-                                inLinePieces['hor'] += 1
-                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
-                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
-                                    inLinePieces['ltrbDiag'] += 1
-                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
-                                    inLinePieces['rtlbDiag'] += 1
-                                }
-                            }
-        
-                            density += 1
-                        } else if (brd[i][j] !== ' ') {
-                            if (j === pos[0]) {
-                                inLinePieces['ver'] -= 1
-                            } else if (i === pos[1]) {
-                                inLinePieces['hor'] -= 1
-                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
-                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
-                                    inLinePieces['ltrbDiag'] -= 1
-                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
-                                    inLinePieces['rtlbDiag'] -= 1
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }

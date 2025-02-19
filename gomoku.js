@@ -139,7 +139,7 @@ class Board{
     }
 }
 
-class MyAgent extends Agent {
+class WuShi extends Agent {
     constructor () {
         super()
         this.board = new Board()
@@ -192,7 +192,7 @@ class MyAgent extends Agent {
                 this.dividePieces(brd)
 
                 if(!this.verifyGoodMove(this.blacks[0], this.blacks[1])) {
-                    console.log("Entro")
+                    this.color = 'B'
                     return 'BLACK'
                 } else if (randNum < 0.03) {
                     var whitePosBrd = this.whites[0]
@@ -228,10 +228,9 @@ class MyAgent extends Agent {
                             break;
                         }
                     }
-
+                    this.color = 'W'
                     return isValid[0]
                 } else {
-                    console.log("Entro dos piezas")
                     var blackPos = Math.floor(initValidMoves.length * Math.random())
                     var whitePos = Math.floor(initValidMoves.length * Math.random())
 
@@ -294,17 +293,16 @@ class MyAgent extends Agent {
                      }
                 }
 
-                console.log(maxBlack, maxWhite)
-
                 if (maxBlack > maxWhite) { 
+                    this.color = 'B'
                     return 'BLACK'
                 } else {
-                    console.log(this.color)
+                    this.color = 'W'
                     return this.bestMove(board, this.color)
                 }
             break;
             default:
-                console.log(this.color)
+                this.color = move_state
                 return this.bestMove(board, this.color)
 			break;
         }
@@ -444,6 +442,8 @@ class MyAgent extends Agent {
 
     bestMove(board, color) {
     	let opponentColor = color === 'W' ? 'B' : 'W';
+        console.log('Color: ', color)
+        console.log('OponentColor: ', opponentColor)
     	let size = board.length;
     	let center = Math.floor(size / 2);
     	let fallbackMove = null;
@@ -536,61 +536,75 @@ class MyAgent extends Agent {
     }
 
     playNow(brd, color, sizeBoard) {
+        var pieces = {}
         if (color === "W") {
-            var localAreaPos = []
-            var pos = []
-            var blacksPos = []
-            var whitesPos = []
+            pieces = this.piecesInLocalArea(this.whites, brd, color, sizeBoard)
+        } else if (color === "B") {
+            pieces = this.piecesInLocalArea(this.blacks, brd, color, sizeBoard)
+        }
+        console.log(color)
+        if (color === 'W') {
+            console.log(this.whites)
+        } else {
+            console.log(this.blacks)
+        }
+        console.log(pieces)
+    }
 
-            for (var k = 0; k < this.blacks.length; k++) {
-                var inLinePieces = {'hor': 0, 'ver': 0, 'ltrbDiag': 0, 'rtlbDiag': 0}
+    piecesInLocalArea(pieces, brd, color, sizeBoard) {
+        var blacksPos = []
+        var whitesPos = []
+        var localAreaPos = []
+        var pos = []
+        for (var k = 0; k < pieces.length; k++) {
+            var inLinePieces1 = {'hor': [], 'ver': [], 'ltrbDiag': [], 'rtlbDiag': []}
+            var inLinePieces2 = {'hor': [], 'ver': [], 'ltrbDiag': [], 'rtlbDiag': []}
 
-                pos = this.blacks[k]
-                localAreaPos = this.localArea(pos, sizeBoard, 3)
-                blacksPos.push([])
+            pos = pieces[k]
+            localAreaPos = this.localArea(pos, sizeBoard, 3)
 
-                for (var i = localAreaPos[2]; i <= localAreaPos[3]; i++) {
-                    for (var j = localAreaPos[0]; j <= localAreaPos[1]; j++) {
-                        if (brd[i][j] === color) {
-                            if (j === pos[0] && i === pos[1]) {
-                                inLinePieces['hor'] += 1
-                                inLinePieces['ver'] += 1
-                                inLinePieces['ltrbDiag'] += 1
-                                inLinePieces['rtlbDiag'] += 1
-                            } else if (j === pos[0]) {
-                                inLinePieces['ver'] += 1
-
-                                if (k === 0) {
-
-                                }
-                            } else if (i === pos[1]) {
-                                inLinePieces['hor'] += 1
-                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
-                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
-                                    inLinePieces['ltrbDiag'] += 1
-                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
-                                    inLinePieces['rtlbDiag'] += 1
-                                }
+            for (var i = localAreaPos[2]; i <= localAreaPos[3]; i++) {
+                for (var j = localAreaPos[0]; j <= localAreaPos[1]; j++) {
+                    if (brd[i][j] === color) {
+                        if (j === pos[0] && i === pos[1]) {
+                            
+                        } else if (j === pos[0]) {
+                            inLinePieces1['ver'].push([j, i])
+                        } else if (i === pos[1]) {
+                            inLinePieces1['hor'].push([j, i])
+                        } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                            if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                                inLinePieces1['ltrbDiag'].push([j, i])
+                            } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                                inLinePieces1['rtlbDiag'].push([j, i])
                             }
-        
-                            density += 1
-                        } else if (brd[i][j] !== ' ') {
-                            if (j === pos[0]) {
-                                inLinePieces['ver'] -= 1
-                            } else if (i === pos[1]) {
-                                inLinePieces['hor'] -= 1
-                            } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
-                                if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
-                                    inLinePieces['ltrbDiag'] -= 1
-                                } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
-                                    inLinePieces['rtlbDiag'] -= 1
-                                }
+                        }
+                    } else if (brd[i][j] !== ' ') {
+                        if (j === pos[0]) {
+                            inLinePieces2['ver'].push([j, i])
+                        } else if (i === pos[1]) {
+                            inLinePieces2['hor'].push([j, i]) 
+                        } else if (Math.abs(j - pos[0]) === Math.abs(i - pos[1])) {
+                            if ((j < pos[0] && i < pos[1]) || (j > pos[0] && i > pos[1])) {
+                                inLinePieces2['ltrbDiag'].push([j, i])
+                            } else if ((j < pos[0] && i > pos[1]) || (j > pos[0] && i < pos[1])) {
+                                inLinePieces2['rtlbDiag'].push([j, i])
                             }
                         }
                     }
                 }
             }
+
+            if (color === 'W') {
+                whitesPos.push(inLinePieces1)
+                blacksPos.push(inLinePieces2)
+            } else if (color === 'B') {
+                whitesPos.push(inLinePieces2)
+                blacksPos.push(inLinePieces1)
+            }
         }
+
+        return {'whitesPos': whitesPos, 'blacksPos': blacksPos}
     }
 }
 
