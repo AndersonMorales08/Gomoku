@@ -448,49 +448,68 @@ class WuShi extends Agent {
     	let center = Math.floor(size / 2);
     	let fallbackMove = null;
     	let bestScore = -Infinity; // Guardará la mejor puntuación encontrada
+        let bestMoves = []
+        let scoreMoves = []
 
     	let threeCount = 0; // Contador de líneas de 3 existentes
 
     	for (let i = 0; i < size; i++) {
         	for (let j = 0; j < size; j++) {
-            		if (board[i][j] === ' ') {
-                		let tempBoard = this.board.clone(board);
+                if (board[i][j] === ' ') {
+                    let tempBoard = this.board.clone(board);
 
-                		// 1. Bloquear si el oponente puede ganar
-                		this.board.move(tempBoard, [j, i], opponentColor);
-                		if (this.board.winner(tempBoard) === opponentColor) {
-                    			return [j, i];
-                		}
+                    // 1. Bloquear si el oponente puede ganar
+                    this.board.move(tempBoard, [j, i], opponentColor);
+                    if (this.board.winner(tempBoard) === opponentColor) {
+                        bestMoves.push([j, i])
+                        scoreMoves.push(8)	
+                        // return [j, i];
+                    }
 
-                		// 2. Ganar si hay oportunidad
-                		tempBoard = this.board.clone(board);
-                		this.board.move(tempBoard, [j, i], color);
-                		if (this.board.winner(tempBoard) === color) {
-                    			return [j, i];
-                		}
+                    // 2. Ganar si hay oportunidad
+                    tempBoard = this.board.clone(board);
+                    this.board.move(tempBoard, [j, i], color);
+                    if (this.board.winner(tempBoard) === color) {
+                        bestMoves.push([j, i])
+                        scoreMoves.push(10)	
+                        // return [j, i];
+                    }
 
-                		// 3. Contar cuántas líneas de 3 existen en el tablero
-                		if (this.createsLine(board, [j, i], color, 3)) {
-                    			threeCount++;
-                		}
+                    if (this.createsLine(board, [j, i], opponentColor, 4)) {
+                        bestMoves.push([j, i])
+                        scoreMoves.push(7)	
+                    }
 
-                		// 4. Si hay suficientes líneas de 3, priorizar crear líneas de 4
-                		if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
-                    			return [j, i];
-                		}
+                    // 3. Contar cuántas líneas de 3 existen en el tablero
+                    if (this.createsLine(board, [j, i], color, 3)) {
+                            threeCount++;
+                    }
 
-                		// 5. Evaluar si este es el mejor movimiento de respaldo (más cerca del centro)
-                		let score = this.distanceFromCenter(j, i, center);
-                		if (score > bestScore) {
-                    			bestScore = score;
-                    			fallbackMove = [j, i];
-                		}
-            		}
+                    // 4. Si hay suficientes líneas de 3, priorizar crear líneas de 4
+                    if (threeCount >= 2 && this.createsLine(board, [j, i], color, 4)) {
+                        bestMoves.push([j, i])
+                        scoreMoves.push(6)	
+                        // return [j, i];
+                    }
+
+                    // 5. Evaluar si este es el mejor movimiento de respaldo (más cerca del centro)
+                    let score = this.distanceFromCenter(j, i, center);
+                    console.log(score)
+                    if (score > bestScore) {
+                            bestScore = score;
+                            fallbackMove = [j, i];
+                    }
+                }
         	}
     	}
 
+        bestMoves.push(fallbackMove)
+        scoreMoves.push(4)
+
+        let bestMovement = this.maxCross(scoreMoves)
+
     	// Si no hay un movimiento claro, jugar el más cercano al centro
-    	return fallbackMove || this.board.valid_moves(board)[0];
+    	return bestMoves[bestMovement] || this.board.valid_moves(board)[0];
     }
 
     distanceFromCenter(x, y, center) {
