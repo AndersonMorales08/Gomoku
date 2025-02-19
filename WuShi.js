@@ -10,7 +10,6 @@ class WuShi extends Agent {
     compute(board, move_state, time) {
         var sizeBoard = board.length
         var moves = this.board.valid_moves(board)
-        console.log(move_state)
         switch (move_state) {
             case '1':
                 var initSizeMove = sizeBoard - 2 
@@ -301,8 +300,6 @@ class WuShi extends Agent {
 
     bestMove(board, color) {
     	let opponentColor = color === 'W' ? 'B' : 'W';
-        console.log('Color: ', color)
-        console.log('OponentColor: ', opponentColor)
     	let size = board.length;
     	let center = Math.floor(size / 2);
     	let fallbackMove = null;
